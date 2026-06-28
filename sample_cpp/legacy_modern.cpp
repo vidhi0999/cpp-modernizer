@@ -19,7 +19,7 @@ void processValue(double val) {
 int main() {
     std::unique_ptr<int[]> myArr = createArray(10);
     checkPointer(myArr);
-    double d = 10.5;
-    processValue(d);
+    double val = 10.5;
+    processValue(val);
     return 0;
 }
