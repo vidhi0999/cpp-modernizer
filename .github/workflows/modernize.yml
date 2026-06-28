@@ -1,0 +1,59 @@
+name: C++ Code Modernizer
+
+on:
+  push:
+    paths:
+      - '**.cpp'
+  pull_request:
+    paths:
+      - '**.cpp'
+
+jobs:
+  modernize:
+    name: Scan and Modernize C++ Code
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1 — Check out the repository code
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Step 2 — Set up Python
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      # Step 3 — Install LLVM and g++ on the Ubuntu runner
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y llvm clang libclang-dev g++
+
+      # Step 4 — Install Python dependencies
+      - name: Install Python dependencies
+        run: |
+          pip install groq python-dotenv clang
+
+      # Step 5 — Run your modernizer on every .cpp file
+      - name: Run C++ Modernizer
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        run: |
+          python3 main.py
+
+      # Step 6 — Upload the modernized files as artifacts
+      # This lets you download the results from GitHub Actions
+      - name: Upload modernized files
+        uses: actions/upload-artifact@v3
+        with:
+          name: modernized-cpp-files
+          path: sample_cpp/*_modern.cpp
+
+      # Step 7 — Print summary
+      - name: Print summary
+        run: |
+          echo "=================================================="
+          echo "  C++ Modernizer completed successfully"
+          echo "  Check the artifacts tab for modernized files"
+          echo "=================================================="
