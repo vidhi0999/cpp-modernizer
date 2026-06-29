@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>C++ Modernizer — Vidhi</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #f9fafb; color: #111827; font-size: 15px; line-height: 1.6;
+  }
+  nav {
+    background: #fff; border-bottom: 1px solid #e5e7eb;
+    padding: 0 2rem; height: 54px;
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 10;
+  }
+  .brand { font-family: monospace; font-size: 14px; font-weight: 600; color: #4f46e5; text-decoration: none; }
+  .nav-link { font-size: 13px; color: #6b7280; text-decoration: none; }
+  .nav-link:hover { color: #111827; }
+  .hero { text-align: center; padding: 4rem 2rem 2rem; }
+  .hero h1 { font-size: 2.2rem; font-weight: 600; margin-bottom: 0.75rem; letter-spacing: -0.02em; }
+  .hero h1 span { color: #4f46e5; }
+  .hero p { color: #6b7280; max-width: 520px; margin: 0 auto 2rem; font-size: 1rem; }
+  .container { max-width: 900px; margin: 0 auto; padding: 0 1.5rem 4rem; }
+  .tool-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+  .panel { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; }
+  .panel-header {
+    padding: 10px 14px; border-bottom: 1px solid #e5e7eb;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .panel-title { font-family: monospace; font-size: 12px; color: #9ca3af; }
+  .badge {
+    font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 500;
+  }
+  .badge-red   { background: #fef2f2; color: #dc2626; }
+  .badge-green { background: #f0fdf4; color: #16a34a; }
+  .badge-gray  { background: #f3f4f6; color: #6b7280; }
+  .badge-yellow{ background: #fefce8; color: #ca8a04; }
+  textarea {
+    width: 100%; height: 240px; border: none; outline: none; resize: none;
+    font-family: monospace; font-size: 12.5px; color: #1f2937;
+    padding: 14px; line-height: 1.75; background: transparent;
+  }
+  textarea::placeholder { color: #9ca3af; }
+  .output {
+    height: 240px; overflow-y: auto; font-family: monospace;
+    font-size: 12.5px; padding: 14px; line-height: 1.75;
+    white-space: pre-wrap; color: #16a34a;
+  }
+  .controls { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+  .btn-main {
+    background: #4f46e5; color: #fff; border: none;
+    border-radius: 8px; padding: 10px 24px; font-size: 14px;
+    font-weight: 500; cursor: pointer; font-family: inherit;
+    transition: background 0.15s;
+  }
+  .btn-main:hover { background: #4338ca; }
+  .btn-main:disabled { opacity: 0.5; cursor: not-allowed; }
+  .status { font-family: monospace; font-size: 12px; color: #9ca3af; }
+  .results {
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 12px;
+    padding: 1.25rem; margin-bottom: 1.5rem; display: none;
+  }
+  .results.show { display: block; }
+  .metrics { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
+  .metric { background: #f9fafb; border-radius: 8px; padding: 12px; text-align: center; }
+  .metric-val { font-size: 1.5rem; font-weight: 600; color: #4f46e5; }
+  .metric-lbl { font-size: 11px; color: #9ca3af; margin-top: 4px; font-family: monospace; }
+  .notice {
+    background: #eff6ff; border-left: 3px solid #3b82f6;
+    padding: 12px 16px; font-size: 13px; color: #374151; border-radius: 0 8px 8px 0;
+  }
+  .notice a { color: #4f46e5; }
+  footer {
+    border-top: 1px solid #e5e7eb; padding: 1.5rem 2rem;
+    text-align: center; font-size: 13px; color: #9ca3af;
+  }
+  footer a { color: #4f46e5; text-decoration: none; }
+  @media (max-width: 640px) {
+    .tool-grid { grid-template-columns: 1fr; }
+    .metrics { grid-template-columns: 1fr; }
+    .hero h1 { font-size: 1.6rem; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="brand" href="#">cpp-modernizer</a>
+  <a class="nav-link" href="https://github.com/vidhi0999/cpp-modernizer" target="_blank">GitHub</a>
+</nav>
+
+<div class="hero">
+  <h1>Modernize legacy C++ <span>automatically</span></h1>
+  <p>Paste your old C++ code below. My tool detects deprecated patterns and rewrites them to safe, modern C++17 using AI.</p>
+</div>
+
+<div class="container">
+
+  <div class="tool-grid">
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">input.cpp</span>
+        <span class="badge badge-red">legacy</span>
+      </div>
+      <textarea id="inputCode" placeholder="#include <iostream>
+
+int* createArray(int size) {
+    int* arr = new int[size];
+    return arr;
+}
+
+int main() {
+    int* x = createArray(10);
+    int val = (int)3.14;
+    delete[] x;
+    return 0;
+}"></textarea>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">output.cpp</span>
+        <span class="badge badge-gray" id="outputBadge">waiting</span>
+      </div>
+      <div class="output" id="outputCode">// Modernized code appears here...</div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button class="btn-main" id="modernizeBtn" onclick="modernize()">Modernize</button>
+    <span class="status" id="statusMsg"></span>
+  </div>
+
+  <div class="results" id="resultsBox">
+    <div class="metrics">
+      <div class="metric">
+        <div class="metric-val" id="mIssues">—</div>
+        <div class="metric-lbl">issues fixed</div>
+      </div>
+      <div class="metric">
+        <div class="metric-val" id="mConf">—</div>
+        <div class="metric-lbl">avg confidence</div>
+      </div>
+      <div class="metric">
+        <div class="metric-val" id="mCompile">—</div>
+        <div class="metric-lbl">compile check</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="notice">
+    First request may take 30 seconds — the free server wakes up on demand.
+    Built by Vidhi ·
+    <a href="https://github.com/vidhi0999/cpp-modernizer" target="_blank">github.com/vidhi0999/cpp-modernizer</a>
+  </div>
+
+</div>
+
+<footer>
+  Built by <a href="https://github.com/vidhi0999" target="_blank">Vidhi</a> ·
+  <a href="https://github.com/vidhi0999/cpp-modernizer" target="_blank">Source code</a> ·
+  <a href="https://cpp-modernizer.onrender.com" target="_blank">Live API</a>
+</footer>
+
+<script>
+async function modernize() {
+  const code   = document.getElementById('inputCode').value.trim();
+  const btn    = document.getElementById('modernizeBtn');
+  const out    = document.getElementById('outputCode');
+  const status = document.getElementById('statusMsg');
+  const badge  = document.getElementById('outputBadge');
+  const results= document.getElementById('resultsBox');
+
+  if (!code) { status.textContent = 'Paste some C++ code first.'; return; }
+
+  btn.disabled = true;
+  status.textContent = 'Scanning... first request may take 30s';
+  out.textContent = '';
+  badge.textContent = 'processing';
+  badge.className = 'badge badge-yellow';
+  results.classList.remove('show');
+
+  try {
+    const r = await fetch('https://cpp-modernizer.onrender.com/modernize', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code, filename: 'input.cpp' })
+    });
+    const data = await r.json();
+
+    if (data.status === 'already_modern') {
+      out.textContent = '// No deprecated patterns found.\n// Code is already modern!';
+      status.textContent = 'No issues found.';
+      badge.textContent = 'modern';
+      badge.className = 'badge badge-green';
+    } else if (data.error) {
+      out.textContent = '// Error: ' + data.error;
+      status.textContent = 'Something went wrong.';
+      badge.textContent = 'error';
+      badge.className = 'badge badge-red';
+    } else {
+      out.textContent = data.modernized_code;
+      status.textContent = 'Fixed ' + data.issues_found + ' issue(s)';
+      badge.textContent = 'modernized';
+      badge.className = 'badge badge-green';
+
+      let avg = '—';
+      if (data.confidence_report && data.confidence_report.length) {
+        const total = data.confidence_report.reduce((s,r) => s + r.score, 0);
+        avg = Math.round(total / data.confidence_report.length) + '/100';
+      }
+      document.getElementById('mIssues').textContent  = data.issues_found;
+      document.getElementById('mConf').textContent    = avg;
+      document.getElementById('mCompile').textContent = data.compile_passed ? 'pass' : 'fail';
+      results.classList.add('show');
+    }
+  } catch(e) {
+    out.textContent = '// Could not connect.\n// Try again in 30 seconds.';
+    status.textContent = 'Connection failed — try again.';
+    badge.textContent = 'error';
+    badge.className = 'badge badge-red';
+  }
+
+  btn.disabled = false;
+}
+
+document.getElementById('inputCode').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.ctrlKey) modernize();
+});
+</script>
+</body>
+</html>
