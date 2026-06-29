@@ -2,6 +2,8 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import tempfile
 import os
+import glob
+import platform
 from parser import parse_cpp_file
 from modernizer import modernize_file
 from validator import validate_cpp
@@ -19,7 +21,8 @@ def home():
         "endpoints": {
             "POST /modernize": "Modernize a C++ code snippet",
             "POST /scan":      "Scan code and return issues only",
-            "GET  /health":    "Health check"
+            "GET  /health":    "Health check",
+            "GET  /debug":     "Debug libclang path"
         }
     })
 
@@ -27,6 +30,69 @@ def home():
 @app.route("/health", methods=["GET"])
 def health():
     return jsonify({"status": "healthy"}), 200
+
+
+@app.route("/debug", methods=["GET"])
+def debug():
+    """
+    Debug endpoint — shows where libclang is on the server.
+    Used to troubleshoot Linux deployment.
+    """
+    import subprocess
+
+    found_glob = []
+    search_patterns = [
+        "/usr/**/*clang*.so*",
+        "/opt/**/*clang*.so*",
+        "/root/**/*clang*.so*",
+        "/home/**/*clang*.so*",
+    ]
+    for pattern in search_patterns:
+        matches = glob.glob(pattern, recursive=True)
+        found_glob.extend(matches)
+
+    # Check Python package directory
+    try:
+        import clang
+        clang_dir = os.path.dirname(clang.__file__)
+        pkg_files = glob.glob(
+            os.path.join(clang_dir, "**", "*.so*"), recursive=True
+        )
+    except Exception as e:
+        clang_dir = str(e)
+        pkg_files = []
+
+    # Check ldconfig
+    try:
+        result = subprocess.run(
+            ["ldconfig", "-p"],
+            capture_output=True, text=True, timeout=10
+        )
+        ldconfig_clang = [
+            line.strip() for line in result.stdout.split("\n")
+            if "clang" in line.lower()
+        ]
+    except Exception as e:
+        ldconfig_clang = [str(e)]
+
+    # Check find command
+    try:
+        result = subprocess.run(
+            ["find", "/usr", "-name", "libclang*", "-type", "f"],
+            capture_output=True, text=True, timeout=15
+        )
+        find_results = result.stdout.strip().split("\n")
+    except Exception as e:
+        find_results = [str(e)]
+
+    return jsonify({
+        "platform": platform.system(),
+        "clang_package_dir": clang_dir,
+        "clang_package_so_files": pkg_files,
+        "glob_search_results": found_glob,
+        "ldconfig_results": ldconfig_clang,
+        "find_results": find_results
+    })
 
 
 @app.route("/scan", methods=["POST"])
@@ -82,14 +148,14 @@ def modernize():
 
         if not issues:
             return jsonify({
-                "filename":       filename,
-                "status":         "already_modern",
-                "message":        "No deprecated patterns found",
-                "issues_found":   0,
-                "compile_passed": None,
-                "original_code":  cpp_code,
+                "filename":        filename,
+                "status":          "already_modern",
+                "message":         "No deprecated patterns found",
+                "issues_found":    0,
+                "compile_passed":  None,
+                "original_code":   cpp_code,
                 "modernized_code": cpp_code,
-                "issues":         []
+                "issues":          []
             }), 200
 
         modernized_code, confidence_report = modernize_file(issues, temp_path)
