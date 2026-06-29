@@ -1,6 +1,6 @@
 flask
 groq
 python-dotenv
-clang
+libclang
 gunicorn
 flask-cors
