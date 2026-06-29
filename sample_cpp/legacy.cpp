@@ -21,4 +21,4 @@ int main() {
     checkPointer(myArr);
     delete[] myArr;
     return 0;
-}
+}// test

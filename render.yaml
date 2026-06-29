@@ -2,10 +2,7 @@ services:
   - type: web
     name: cpp-modernizer-api
     runtime: python
-    buildCommand: |
-      apt-get update &&
-      apt-get install -y llvm-14 clang-14 libclang-14-dev g++ &&
-      pip install -r requirements.txt
+    buildCommand: bash build.sh
     startCommand: gunicorn api:app --bind 0.0.0.0:$PORT
     envVars:
       - key: GROQ_API_KEY
