@@ -24,6 +24,14 @@
   .hero h1 span { color: #4f46e5; }
   .hero p { color: #6b7280; max-width: 520px; margin: 0 auto 2rem; font-size: 1rem; }
   .container { max-width: 900px; margin: 0 auto; padding: 0 1.5rem 4rem; }
+  .tab-btn {
+    background: #fff; border: 1px solid #e5e7eb;
+    border-radius: 8px; padding: 8px 18px;
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    color: #6b7280; transition: all 0.15s; font-family: inherit;
+  }
+  .tab-btn.active { background: #4f46e5; color: #fff; border-color: #4f46e5; }
+  .tab-row { display: flex; gap: 8px; margin-bottom: 1.25rem; }
   .tool-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
   .panel { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; }
   .panel-header {
@@ -31,13 +39,11 @@
     display: flex; align-items: center; justify-content: space-between;
   }
   .panel-title { font-family: monospace; font-size: 12px; color: #9ca3af; }
-  .badge {
-    font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 500;
-  }
-  .badge-red   { background: #fef2f2; color: #dc2626; }
-  .badge-green { background: #f0fdf4; color: #16a34a; }
-  .badge-gray  { background: #f3f4f6; color: #6b7280; }
-  .badge-yellow{ background: #fefce8; color: #ca8a04; }
+  .badge { font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 500; }
+  .badge-red    { background: #fef2f2; color: #dc2626; }
+  .badge-green  { background: #f0fdf4; color: #16a34a; }
+  .badge-gray   { background: #f3f4f6; color: #6b7280; }
+  .badge-yellow { background: #fefce8; color: #ca8a04; }
   textarea {
     width: 100%; height: 240px; border: none; outline: none; resize: none;
     font-family: monospace; font-size: 12.5px; color: #1f2937;
@@ -68,9 +74,36 @@
   .metric { background: #f9fafb; border-radius: 8px; padding: 12px; text-align: center; }
   .metric-val { font-size: 1.5rem; font-weight: 600; color: #4f46e5; }
   .metric-lbl { font-size: 11px; color: #9ca3af; margin-top: 4px; font-family: monospace; }
+  .upload-box {
+    border: 2px dashed #e5e7eb; border-radius: 12px;
+    padding: 3rem 2rem; text-align: center; cursor: pointer;
+    transition: all 0.2s; background: #fff; margin-bottom: 1rem;
+  }
+  .upload-box:hover { border-color: #4f46e5; background: #f5f3ff; }
+  .upload-box.dragover { border-color: #4f46e5; background: #f5f3ff; }
+  .upload-icon { font-size: 3rem; color: #4f46e5; margin-bottom: 1rem; }
+  .upload-text { font-size: 15px; font-weight: 500; color: #111827; margin-bottom: 0.25rem; }
+  .upload-sub { font-size: 13px; color: #9ca3af; }
+  .file-result {
+    background: #fff; border: 1px solid #e5e7eb;
+    border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem;
+  }
+  .file-result-header {
+    display: flex; align-items: center;
+    justify-content: space-between; margin-bottom: 1rem;
+    flex-wrap: wrap; gap: 8px;
+  }
+  .file-result-name { font-family: monospace; font-size: 13px; font-weight: 600; color: #111827; }
+  .file-code {
+    background: #f9fafb; border-radius: 8px; padding: 12px;
+    font-family: monospace; font-size: 12px; color: #16a34a;
+    white-space: pre-wrap; max-height: 200px; overflow-y: auto;
+    border: 1px solid #e5e7eb;
+  }
   .notice {
     background: #eff6ff; border-left: 3px solid #3b82f6;
-    padding: 12px 16px; font-size: 13px; color: #374151; border-radius: 0 8px 8px 0;
+    padding: 12px 16px; font-size: 13px; color: #374151;
+    border-radius: 0 8px 8px 0; margin-bottom: 1.5rem;
   }
   .notice a { color: #4f46e5; }
   footer {
@@ -94,18 +127,26 @@
 
 <div class="hero">
   <h1>Modernize legacy C++ <span>automatically</span></h1>
-  <p>Paste your old C++ code below. My tool detects deprecated patterns and rewrites them to safe, modern C++17 using AI.</p>
+  <p>Paste your code, upload a .cpp file, or drop an entire .zip project — my tool finds deprecated patterns and rewrites them to safe C++17 using AI.</p>
 </div>
 
 <div class="container">
 
-  <div class="tool-grid">
-    <div class="panel">
-      <div class="panel-header">
-        <span class="panel-title">input.cpp</span>
-        <span class="badge badge-red">legacy</span>
-      </div>
-      <textarea id="inputCode" placeholder="#include <iostream>
+  <!-- TAB SWITCHER -->
+  <div class="tab-row">
+    <button class="tab-btn active" onclick="switchTab('paste')" id="tab-paste">Paste code</button>
+    <button class="tab-btn" onclick="switchTab('upload')" id="tab-upload">Upload .cpp or .zip</button>
+  </div>
+
+  <!-- PASTE TAB -->
+  <div id="panel-paste">
+    <div class="tool-grid">
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">input.cpp</span>
+          <span class="badge badge-red">legacy</span>
+        </div>
+        <textarea id="inputCode" placeholder="#include <iostream>
 
 int* createArray(int size) {
     int* arr = new int[size];
@@ -118,37 +159,60 @@ int main() {
     delete[] x;
     return 0;
 }"></textarea>
-    </div>
-
-    <div class="panel">
-      <div class="panel-header">
-        <span class="panel-title">output.cpp</span>
-        <span class="badge badge-gray" id="outputBadge">waiting</span>
       </div>
-      <div class="output" id="outputCode">// Modernized code appears here...</div>
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">output.cpp</span>
+          <span class="badge badge-gray" id="outputBadge">waiting</span>
+        </div>
+        <div class="output" id="outputCode">// Modernized code appears here...</div>
+      </div>
+    </div>
+    <div class="controls">
+      <button class="btn-main" id="modernizeBtn" onclick="modernize()">Modernize</button>
+      <span class="status" id="statusMsg"></span>
+    </div>
+    <div class="results" id="resultsBox">
+      <div class="metrics">
+        <div class="metric">
+          <div class="metric-val" id="mIssues">—</div>
+          <div class="metric-lbl">issues fixed</div>
+        </div>
+        <div class="metric">
+          <div class="metric-val" id="mConf">—</div>
+          <div class="metric-lbl">avg confidence</div>
+        </div>
+        <div class="metric">
+          <div class="metric-val" id="mCompile">—</div>
+          <div class="metric-lbl">compile check</div>
+        </div>
+      </div>
     </div>
   </div>
 
-  <div class="controls">
-    <button class="btn-main" id="modernizeBtn" onclick="modernize()">Modernize</button>
-    <span class="status" id="statusMsg"></span>
-  </div>
-
-  <div class="results" id="resultsBox">
-    <div class="metrics">
-      <div class="metric">
-        <div class="metric-val" id="mIssues">—</div>
-        <div class="metric-lbl">issues fixed</div>
-      </div>
-      <div class="metric">
-        <div class="metric-val" id="mConf">—</div>
-        <div class="metric-lbl">avg confidence</div>
-      </div>
-      <div class="metric">
-        <div class="metric-val" id="mCompile">—</div>
-        <div class="metric-lbl">compile check</div>
+  <!-- UPLOAD TAB -->
+  <div id="panel-upload" style="display:none">
+    <div class="upload-box" id="uploadBox"
+         onclick="document.getElementById('fileInput').click()"
+         ondragover="handleDragOver(event)"
+         ondrop="handleDrop(event)">
+      <div class="upload-icon">&#8679;</div>
+      <p class="upload-text">Click to upload or drag and drop</p>
+      <p class="upload-sub">.cpp file or .zip containing multiple .cpp files</p>
+      <input type="file" id="fileInput" accept=".cpp,.zip"
+             style="display:none" onchange="handleFileSelect(event)"/>
+    </div>
+    <div id="fileInfo" style="display:none;margin-bottom:1rem">
+      <div class="panel-header" style="border-radius:8px;border:1px solid #e5e7eb;background:#fff">
+        <span class="panel-title" id="fileName">No file selected</span>
+        <span class="badge badge-gray" id="fileBadge">ready</span>
       </div>
     </div>
+    <div class="controls">
+      <button class="btn-main" onclick="modernizeFile()">Modernize file</button>
+      <span class="status" id="fileStatusMsg"></span>
+    </div>
+    <div id="fileResults"></div>
   </div>
 
   <div class="notice">
@@ -166,6 +230,17 @@ int main() {
 </footer>
 
 <script>
+const API = 'https://cpp-modernizer.onrender.com';
+let selectedFile = null;
+
+function switchTab(tab) {
+  document.getElementById('panel-paste').style.display  = tab === 'paste'  ? 'block' : 'none';
+  document.getElementById('panel-upload').style.display = tab === 'upload' ? 'block' : 'none';
+  document.getElementById('tab-paste').classList.toggle('active',  tab === 'paste');
+  document.getElementById('tab-upload').classList.toggle('active', tab === 'upload');
+  document.getElementById('resultsBox').classList.remove('show');
+}
+
 async function modernize() {
   const code   = document.getElementById('inputCode').value.trim();
   const btn    = document.getElementById('modernizeBtn');
@@ -184,7 +259,7 @@ async function modernize() {
   results.classList.remove('show');
 
   try {
-    const r = await fetch('https://cpp-modernizer.onrender.com/modernize', {
+    const r = await fetch(`${API}/modernize`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ code, filename: 'input.cpp' })
@@ -223,8 +298,98 @@ async function modernize() {
     badge.textContent = 'error';
     badge.className = 'badge badge-red';
   }
-
   btn.disabled = false;
+}
+
+function handleFileSelect(e) {
+  const file = e.target.files[0];
+  if (file) setFile(file);
+}
+
+function handleDragOver(e) {
+  e.preventDefault();
+  document.getElementById('uploadBox').classList.add('dragover');
+}
+
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('uploadBox').classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file) setFile(file);
+}
+
+function setFile(file) {
+  selectedFile = file;
+  document.getElementById('fileName').textContent = file.name;
+  document.getElementById('fileBadge').textContent = 'ready';
+  document.getElementById('fileBadge').className = 'badge badge-gray';
+  document.getElementById('fileInfo').style.display = 'block';
+  document.getElementById('fileResults').innerHTML = '';
+  document.getElementById('fileStatusMsg').textContent = '';
+}
+
+async function modernizeFile() {
+  if (!selectedFile) {
+    document.getElementById('fileStatusMsg').textContent = 'Please select a file first.';
+    return;
+  }
+
+  const statusMsg  = document.getElementById('fileStatusMsg');
+  const fileBadge  = document.getElementById('fileBadge');
+  const fileResults= document.getElementById('fileResults');
+
+  statusMsg.textContent = 'Processing... this may take a minute.';
+  fileBadge.textContent = 'processing';
+  fileBadge.className   = 'badge badge-yellow';
+  fileResults.innerHTML = '';
+
+  const formData = new FormData();
+  formData.append('file', selectedFile);
+
+  try {
+    const r = await fetch(`${API}/upload`, { method: 'POST', body: formData });
+    const data = await r.json();
+
+    if (data.error) {
+      statusMsg.textContent = 'Error: ' + data.error;
+      fileBadge.textContent = 'error';
+      fileBadge.className   = 'badge badge-red';
+      return;
+    }
+
+    statusMsg.textContent = `Processed ${data.files_processed} file(s)`;
+    fileBadge.textContent = 'done';
+    fileBadge.className   = 'badge badge-green';
+
+    data.results.forEach(result => {
+      const avg = result.confidence_report && result.confidence_report.length
+        ? Math.round(result.confidence_report.reduce((s,r) => s + r.score, 0) / result.confidence_report.length)
+        : null;
+
+      const safeCode = result.modernized_code
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+      fileResults.innerHTML += `
+        <div class="file-result">
+          <div class="file-result-header">
+            <span class="file-result-name">${result.filename}</span>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <span class="badge badge-green">${result.issues_found} issue(s) fixed</span>
+              ${avg !== null ? `<span class="badge badge-green">${avg}/100 confidence</span>` : ''}
+              <span class="badge ${result.compile_passed ? 'badge-green' : 'badge-gray'}">
+                compile ${result.compile_passed ? 'pass' : 'n/a'}
+              </span>
+            </div>
+          </div>
+          <div class="file-code">${safeCode}</div>
+        </div>`;
+    });
+
+  } catch(e) {
+    statusMsg.textContent = 'Connection failed — try again in 30s.';
+    fileBadge.textContent = 'error';
+    fileBadge.className   = 'badge badge-red';
+  }
 }
 
 document.getElementById('inputCode').addEventListener('keydown', e => {
@@ -233,4 +398,3 @@ document.getElementById('inputCode').addEventListener('keydown', e => {
 </script>
 </body>
 </html>
- 
