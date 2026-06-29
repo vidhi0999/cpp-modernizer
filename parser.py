@@ -1,18 +1,56 @@
-from platform import node
-
 import clang.cindex
 import os
-
-# Point Python to the libclang library installed by Homebrew
 import platform
 
-# Set libclang path based on operating system
-if platform.system() == "Darwin":
-    # Mac — installed via Homebrew
-    clang.cindex.Config.set_library_path("/opt/homebrew/opt/llvm/lib")
-elif platform.system() == "Linux":
-    # Linux — installed via apt-get on Render
-    clang.cindex.Config.set_library_path("/usr/lib/llvm-14/lib")
+
+def setup_libclang():
+    """
+    Sets up the libclang library path based on the operating system.
+    Mac uses Homebrew, Linux uses the bundled libclang Python package.
+    """
+    if platform.system() == "Darwin":
+        # Mac — libclang installed via Homebrew
+        clang.cindex.Config.set_library_path("/opt/homebrew/opt/llvm/lib")
+
+    elif platform.system() == "Linux":
+        # Linux (Render) — use libclang Python package which bundles libclang
+        try:
+            import ctypes.util
+            import glob
+
+            # Try common Linux paths first
+            linux_paths = [
+                "/usr/lib/llvm-14/lib",
+                "/usr/lib/llvm-13/lib",
+                "/usr/lib/llvm-12/lib",
+                "/usr/lib/x86_64-linux-gnu",
+                "/usr/lib64",
+                "/usr/lib",
+            ]
+
+            for path in linux_paths:
+                pattern = os.path.join(path, "libclang*.so*")
+                matches = glob.glob(pattern)
+                if matches:
+                    clang.cindex.Config.set_library_file(matches[0])
+                    return
+
+            # Fallback — find libclang from the installed Python package
+            import site
+            for site_path in site.getsitepackages():
+                pattern = os.path.join(site_path, "**", "libclang*.so*")
+                matches = glob.glob(pattern, recursive=True)
+                if matches:
+                    clang.cindex.Config.set_library_file(matches[0])
+                    return
+
+        except Exception as e:
+            print(f"[WARNING] Could not auto-detect libclang path: {e}")
+
+
+# Run setup when module is imported
+setup_libclang()
+
 
 def parse_cpp_file(filepath):
     """
@@ -40,7 +78,6 @@ def parse_cpp_file(filepath):
 
             # Check 2: NULL usage (should be nullptr in modern C++)
             if node.kind == clang.cindex.CursorKind.MACRO_INSTANTIATION:
-
                 if node.spelling == "NULL":
                     issues.append({
                         "type": "null_usage",
@@ -69,7 +106,6 @@ def parse_cpp_file(filepath):
 
 
 if __name__ == "__main__":
-    # Test it on our legacy.cpp file
     filepath = os.path.join(os.path.dirname(__file__), "sample_cpp", "legacy.cpp")
     issues = parse_cpp_file(filepath)
 
