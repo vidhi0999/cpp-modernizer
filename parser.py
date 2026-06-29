@@ -4,7 +4,15 @@ import clang.cindex
 import os
 
 # Point Python to the libclang library installed by Homebrew
-clang.cindex.Config.set_library_path("/opt/homebrew/opt/llvm/lib")
+import platform
+
+# Set libclang path based on operating system
+if platform.system() == "Darwin":
+    # Mac — installed via Homebrew
+    clang.cindex.Config.set_library_path("/opt/homebrew/opt/llvm/lib")
+elif platform.system() == "Linux":
+    # Linux — installed via apt-get on Render
+    clang.cindex.Config.set_library_path("/usr/lib/llvm-14/lib")
 
 def parse_cpp_file(filepath):
     """
