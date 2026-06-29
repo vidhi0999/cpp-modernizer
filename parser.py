@@ -4,48 +4,26 @@ import platform
 
 
 def setup_libclang():
-    """
-    Sets up the libclang library path based on the operating system.
-    Mac uses Homebrew, Linux uses the bundled libclang Python package.
-    """
     if platform.system() == "Darwin":
-        # Mac — libclang installed via Homebrew
         clang.cindex.Config.set_library_path("/opt/homebrew/opt/llvm/lib")
-
     elif platform.system() == "Linux":
-        # Linux (Render) — use libclang Python package which bundles libclang
-        try:
-            import ctypes.util
-            import glob
+        import glob
+        # Search all common locations
+        patterns = [
+            "/usr/lib/x86_64-linux-gnu/libclang-*.so*",
+            "/usr/lib/llvm-*/lib/libclang.so*",
+            "/usr/lib/x86_64-linux-gnu/libclang.so*",
+            "/usr/lib64/libclang.so*",
+            "/usr/local/lib/libclang.so*",
+        ]
+        for pattern in patterns:
+            matches = glob.glob(pattern)
+            if matches:
+                print(f"[INFO] Found libclang at: {matches[0]}")
+                clang.cindex.Config.set_library_file(matches[0])
+                return
+        print("[ERROR] Could not find libclang.so on this system")
 
-            # Try common Linux paths first
-            linux_paths = [
-                "/usr/lib/llvm-14/lib",
-                "/usr/lib/llvm-13/lib",
-                "/usr/lib/llvm-12/lib",
-                "/usr/lib/x86_64-linux-gnu",
-                "/usr/lib64",
-                "/usr/lib",
-            ]
-
-            for path in linux_paths:
-                pattern = os.path.join(path, "libclang*.so*")
-                matches = glob.glob(pattern)
-                if matches:
-                    clang.cindex.Config.set_library_file(matches[0])
-                    return
-
-            # Fallback — find libclang from the installed Python package
-            import site
-            for site_path in site.getsitepackages():
-                pattern = os.path.join(site_path, "**", "libclang*.so*")
-                matches = glob.glob(pattern, recursive=True)
-                if matches:
-                    clang.cindex.Config.set_library_file(matches[0])
-                    return
-
-        except Exception as e:
-            print(f"[WARNING] Could not auto-detect libclang path: {e}")
 
 
 # Run setup when module is imported
